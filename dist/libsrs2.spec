@@ -7,7 +7,7 @@
 
 Summary: SRS email address rewriting engine
 Name: libsrs2
-Version: 1.0.11
+Version: 1.0.12
 Release: 4%{?redhatvers:.%{redhatvers}}
 License: GPL
 Group: System Environment/Libraries
