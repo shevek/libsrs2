@@ -1,5 +1,5 @@
 SUBDIRS = libsrs2 tools
-EXTRA_DIST = perl win32 dist
+EXTRA_DIST = perl win32 dist LICENSE.BSD LICENSE.GPL-2
 
 dist-hook:
 	find $(distdir)/perl -name .svn | xargs rm -rf
