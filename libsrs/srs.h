@@ -56,6 +56,8 @@ struct _srs_t {
 srs_t	*srs_new();
 int		 srs_forward(srs_t *srs, char *buf, int buflen,
 				const char *sender, const char *alias);
+int		 srs_reverse(srs_t *srs, char *buf, int buflen,
+				const char *sender);
 const char *
 		srs_strerror(int code);
 void	 srs_add_secret(srs_t *srs, const char *secret);
