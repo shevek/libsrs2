@@ -23,6 +23,8 @@ sub MY::postamble {
 	chomp($old);
 	my $new = <<'EON';
 
+$(INST_DYNAMIC) : ../libsrs2/.libs/libsrs2.so.*
+
 .PHONY : aux dep readme
 
 CPP.c : typemap

@@ -1,5 +1,8 @@
 #!/bin/sh
 
-aclocal \
-	&& automake --gnu --add-missing \
-	&& autoconf
+# export WANT_AUTOCONF=2.5
+export WANT_AUTOMAKE=1.4
+
+aclocal && \
+automake --gnu --add-missing && \
+autoconf

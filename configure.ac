@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(libsrs2/srs2.h)
-AM_INIT_AUTOMAKE(libsrs2, 1.0.8)
+AM_INIT_AUTOMAKE(libsrs2, 1.0.10)
 
 dnl Weird Unix variants
 AC_AIX
@@ -24,21 +24,24 @@ AC_C_VOLATILE
 AC_C_BIGENDIAN
 AC_C_INLINE
 AC_C_CHAR_UNSIGNED
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(unsigned long)
 
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(strings.h time.h sys/time.h sys/types.h unistd.h)
-AC_CHECK_HEADER(openssl/ssl.h, , [
-	echo "OpenSSL is required to build this library."
-	exit 1;
-])
+
+dnl AC_CHECK_HEADER(openssl/ssl.h, , [
+dnl 	echo "OpenSSL is required to build this library."
+dnl 	exit 1;
+dnl ])
 
 dnl Checks for libraries.
 dnl Replace `main' with a function in -lcrypto:
-AC_CHECK_LIB(crypto, EVP_sha1, , [
-	echo "OpenSSL is required to build this library."
-	exit 1;
-])
+dnl AC_CHECK_LIB(crypto, EVP_sha1, , [
+dnl 	echo "OpenSSL is required to build this library."
+dnl 	exit 1;
+dnl ])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

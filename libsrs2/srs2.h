@@ -14,7 +14,11 @@
 #ifndef __SRS_H__
 #define __SRS_H__
 
+#ifdef _WIN32
+#include "win32.h"
+#else
 #include "../config.h"
+#endif
 
 #ifdef HAVE_TIME_H
 #include <time.h>       /* time */
@@ -28,8 +32,8 @@
 #include <sys/time.h>   /* timeval / timezone struct */
 #endif
 
-#ifdef _WIN32
-#include "win32.h"
+#ifdef HAVE_STRING_H
+#include <string.h>
 #endif
 
 __BEGIN_DECLS
@@ -63,6 +67,8 @@ __BEGIN_DECLS
 #define SRS_ENOSRS0HASH			14
 #define SRS_ENOSRS0STAMP		15
 
+/* SRS implementation */
+
 typedef
 struct _srs_t {
 	/* Rewriting parameters */
@@ -81,17 +87,49 @@ struct _srs_t {
 
 /* Interface */
 srs_t	*srs_new();
+void	 srs_init(srs_t *srs);
+void	 srs_free(srs_t *srs);
 int		 srs_forward(srs_t *srs, char *buf, int buflen,
 				const char *sender, const char *alias);
 int		 srs_reverse(srs_t *srs, char *buf, int buflen,
 				const char *sender);
 const char *
-		srs_strerror(int code);
+		 srs_strerror(int code);
 void	 srs_add_secret(srs_t *srs, const char *secret);
 
 #define SRS_PARAM_DECLARE(n, t) \
 	void srs_set_ ## n (srs_t *srs, t value); \
 	t srs_get_ ## n (srs_t *srs);
+
+
+/* SHA1 implementation */
+
+#if SIZEOF_UNSIGNED_LONG < 4
+#error "SHA1 requires an unsigned long of at least 32 bits"
+#endif
+typedef unsigned long	ULONG;	 /* 32-or-more-bit quantity */
+typedef unsigned char	sha_byte;
+
+#define SHA_BLOCKSIZE				64
+#define SHA_DIGESTSIZE				20
+
+typedef struct {
+	ULONG digest[5];				/* message digest */
+	ULONG count_lo, count_hi;		/* 64-bit bit count */
+	sha_byte data[SHA_BLOCKSIZE];		/* SHA data buffer */
+	int local;						/* unprocessed amount in data */
+} SHA_INFO;
+
+typedef
+struct _srs_hmac_ctx_t {
+	SHA_INFO	sctx;
+	char		ipad[SHA_BLOCKSIZE + 1];
+	char		opad[SHA_BLOCKSIZE + 1];
+} srs_hmac_ctx_t;
+
+void	 srs_hmac_init(srs_hmac_ctx_t *ctx, char *secret, int len);
+void	 srs_hmac_update(srs_hmac_ctx_t *ctx, char *data, int len);
+void	 srs_hmac_fini(srs_hmac_ctx_t *ctx, char *out);
 
 
 __END_DECLS

@@ -11,17 +11,17 @@
  * information.
  */
 
+#undef USE_OPENSSL
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
+#ifdef USE_OPENSSL
 #include <openssl/hmac.h>
-#include "srs2.h"
-
-#ifdef _WIN32
-#include "win32.h"
 #endif
+#include "srs2.h"
 
 #ifndef EVP_MAX_MD_SIZE
 #define EVP_MAX_MD_SIZE (16+20) /* The SSLv3 md5+sha1 type */
@@ -85,9 +85,18 @@ srs_strerror(int code)
 	}
 }
 
+srs_t *
+srs_new()
+{
+	srs_t	*srs = (srs_t *)malloc(sizeof(srs_t));
+	srs_init(srs);
+	return srs;
+}
+
 void
 srs_init(srs_t *srs)
 {
+	memset(srs, 0, sizeof(srs_t));
 	srs->secrets = NULL;
 	srs->numsecrets = 0;
 	srs->separator = '=';
@@ -95,7 +104,18 @@ srs_init(srs_t *srs)
 	srs->hashlength = 4;
 	srs->hashmin = srs->hashlength;
 	srs->alwaysrewrite = FALSE;
-	return srs;
+}
+
+void
+srs_free(srs_t *srs)
+{
+	int	 i;
+	for (i = 0; i < srs->numsecrets; i++) {
+		memset(srs->secrets[i], 0, strlen(srs->secrets[i]));
+		free(srs->secrets[i]);
+		srs->secrets[i] = '\0';
+	}
+	free(srs);
 }
 
 void
@@ -183,9 +203,14 @@ const char *SRS_HASH_BASECHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 static void
 srs_hash_create_v(srs_t *srs, int idx, char *buf, int nargs, va_list ap)
 {
+#ifdef USE_OPENSSL
 	HMAC_CTX		 ctx;
-	char			 srshash[EVP_MAX_MD_SIZE + 1];
 	int				 srshashlen;
+	char			 srshash[EVP_MAX_MD_SIZE + 1];
+#else
+	srs_hmac_ctx_t	 ctx;
+	char			 srshash[SHA_DIGESTSIZE + 1];
+#endif
 	char			*secret;
 	char			*data;
 	int				 len;
@@ -197,8 +222,12 @@ srs_hash_create_v(srs_t *srs, int idx, char *buf, int nargs, va_list ap)
 
 	secret = srs->secrets[idx];
 
+#ifdef USE_OPENSSL
 	HMAC_CTX_init(&ctx);
 	HMAC_Init(&ctx, secret, strlen(secret), EVP_sha1());
+#else
+	srs_hmac_init(&ctx, secret, strlen(secret));
+#endif
 
 	for (i = 0; i < nargs; i++) {
 		data = va_arg(ap, char *);
@@ -210,13 +239,22 @@ srs_hash_create_v(srs_t *srs, int idx, char *buf, int nargs, va_list ap)
 			else
 				lcdata[j] = data[j];
 		}
+#ifdef USE_OPENSSL
 		HMAC_Update(&ctx, lcdata, len);
+#else
+		srs_hmac_update(&ctx, lcdata, len);
+#endif
 	}
 
+#ifdef USE_OPENSSL
 	HMAC_Final(&ctx, srshash, &srshashlen);
 	HMAC_CTX_cleanup(&ctx);
-
 	srshash[EVP_MAX_MD_SIZE] = '\0';
+#else
+	srs_hmac_fini(&ctx, srshash);
+	srshash[SHA_DIGESTSIZE] = '\0';
+#endif
+
 
 	/* A little base64 encoding. Just a little. */
 	hp = (unsigned char *)srshash;

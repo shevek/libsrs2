@@ -1,6 +1,8 @@
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
+
+#undef VERSION	/* From XS command line */
 #include "../libsrs2/srs2.h"
 
 #ifndef BUFSIZ
@@ -18,16 +20,25 @@ new(class, args)
 	SV*	class
 	HV*	args
 	PREINIT:
-		SV	**svp;
+		SV		**svp;
+		srs_t	 *srs;
 	CODE:
 		svp = hv_fetch(args, "Secret", 6, FALSE);
 		if (!SvPOK(*svp))
 			croak("Usage: new( { Secret => 'secret' } )");
-		srs_t	*srs = srs_new();
+		Newz(0, srs, 1, srs_t);
+		srs_init(srs);
 		srs_add_secret(srs, SvPV_nolen(*svp));
 		RETVAL = srs;
 	OUTPUT:
 		RETVAL
+
+void
+DESTROY(srs)
+	Mail::SRS_XS	srs
+	CODE:
+		srs_fini(srs);
+		Safefree(srs);
 
 const char *
 forward(srs, sender, alias)
