@@ -1,4 +1,6 @@
-noinst_HEADERS = main.h util.h crypto.h base.h error.h
+CFLAGS = -Wall @CFLAGS@
+
+noinst_HEADERS = srs.c
 include_HEADERS = srs.h
 
 lib_LIBRARIES = libsrs.a
