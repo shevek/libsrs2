@@ -16,10 +16,10 @@
 
 #ifdef _WIN32
 #include "win32.h"
-#else
-# ifdef HAVE_CONFIG_H
-#  include "../config.h"
-# endif
+#endif
+
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
 #endif
 
 #ifdef HAVE_TIME_H
@@ -35,7 +35,7 @@
 #endif
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#include <string.h>		/* memcpy, strcpy, memset */
 #endif
 
 __BEGIN_DECLS
@@ -52,12 +52,14 @@ __BEGIN_DECLS
 #define SRS0TAG	"SRS0"
 #define SRS1TAG	"SRS1"
 
+/* Error codes */
+
 #define SRS_ERRTYPE_MASK		0xF000
 #define SRS_ERRTYPE_NONE		0x0000
 #define SRS_ERRTYPE_CONFIG		0x1000
 #define SRS_ERRTYPE_INPUT		0x2000
 #define SRS_ERRTYPE_SYNTAX		0x4000
-#define SRS_ERRTYPE_SRS		0x8000
+#define SRS_ERRTYPE_SRS			0x8000
 
 #define SRS_SUCCESS				(0)
 #define SRS_ENOTSRSADDRESS		(1)
@@ -84,6 +86,12 @@ __BEGIN_DECLS
 #define SRS_ERROR_TYPE(x) ((x) & SRS_ERRTYPE_MASK)
 
 /* SRS implementation */
+
+#define SRS_ADDRESS_P(x) ( \
+				(strncasecmp((x), "SRS", 3) == 0) && \
+				(strchr("01", (x)[3]) != NULL) && \
+				(strchr("-+=", (x)[4]) != NULL) \
+			)
 
 typedef
 struct _srs_t {
