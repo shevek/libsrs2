@@ -57,6 +57,8 @@ srs_strerror(int code)
 		/* Config errors */
 		case SRS_ENOSECRETS:
 			return "No secrets in SRS configuration.";
+		case SRS_ESEPARATORINVALID:
+			return "Invalid separator suggested.";
 
 		/* Input errors */
 		case SRS_ENOSENDERATSIGN:
@@ -79,8 +81,6 @@ srs_strerror(int code)
 			return "No user in SRS1 address.";
 		case SRS_ENOSRS1HASH:
 			return "No hash in SRS1 address.";
-		case SRS_ESEPARATORINVALID:
-			return "Invalid separator suggested.";
 		case SRS_EBADTIMESTAMPCHAR:
 			return "Bad base32 character in timestamp.";
 		case SRS_EHASHTOOSHORT:
