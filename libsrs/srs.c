@@ -6,6 +6,13 @@
 
 static const char *srs_separators = "=-+";
 
+const char *
+srs_strerror(int code)
+{
+	/* XXX Fill these in */
+	return "Error!";
+}
+
 srs_t *
 srs_new()
 {
@@ -21,7 +28,7 @@ srs_new()
 }
 
 void
-srs_add_secret(srs_t *srs, char *secret)
+srs_add_secret(srs_t *srs, const char *secret)
 {
 	int		newlen = (srs->numsecrets + 1) * sizeof(char *);
 	srs->secrets = (char **)realloc(srs->secrets, newlen);
@@ -76,6 +83,7 @@ srs_timestamp_create(srs_t *srs, char *buf)
 	buf[0] = SRS_TIME_BASECHARS[now & ((1 << SRS_TIME_BASEBITS) - 1)];
 	now = now >> SRS_TIME_BASEBITS;
 	buf[1] = SRS_TIME_BASECHARS[now & ((1 << SRS_TIME_BASEBITS) - 1)];
+	buf[2] = '\0';
 }
 
 static int
@@ -111,6 +119,7 @@ static void
 srs_hash_create_v(srs_t *srs, char *buf, int nargs, va_list ap)
 {
 	strncpy(buf, "XXXXHASH", srs->hashlength);
+	buf[srs->hashlength] = '\0';
 }
 
 void
@@ -140,8 +149,8 @@ srs_hash_check(srs_t *srs, char *hash, int nargs, ...)
 		hash = tmp;
 		len = srs->hashlength;
 	}
-	srshash = alloca(srs->hashlength + 1);
 	va_start(ap, nargs);
+	srshash = alloca(srs->hashlength + 1);
 	srs_hash_create_v(srs, srshash, nargs, ap);
 	va_end(ap);
 	if (strncasecmp(hash, srshash, len) != 0)
@@ -153,9 +162,9 @@ int
 srs_compile_shortcut(srs_t *srs,
 				char *buf, int buflen,
 				char *sendhost, char *senduser,
-				char *aliashost) {
+				const char *aliashost) {
 	char	*srshash;
-	char	 srsstamp[SRS_TIME_SIZE];
+	char	 srsstamp[SRS_TIME_SIZE + 1];
 	int		 len;
 
 	/* This never happens if we get called from guarded() */
@@ -165,7 +174,7 @@ srs_compile_shortcut(srs_t *srs,
 		if (*sendhost == '\0')
 			return SRS_ENOSRS0HOST;
 		senduser = strchr(sendhost, SRSSEP);
-		if ((senduser == '\0') || (*senduser == '\0'))
+		if ((senduser == NULL) || (*senduser == '\0'))
 			return SRS_ENOSRS0USER;
 	}
 
@@ -193,7 +202,7 @@ int
 srs_compile_guarded(srs_t *srs,
 				char *buf, int buflen,
 				char *sendhost, char *senduser,
-				char *aliashost) {
+				const char *aliashost) {
 	char	*srshost;
 	char	*srsuser;
 	char	*srshash;
@@ -205,7 +214,7 @@ srs_compile_guarded(srs_t *srs,
 		if (*srshost == '\0')
 			return SRS_ENOSRS1HOST;
 		srsuser = strchr(srshost, SRSSEP);
-		if ((srsuser == '\0') || (*srsuser == '\0'))
+		if ((srsuser == NULL) || (*srsuser == '\0'))
 			return SRS_ENOSRS1USER;
 		srshash = alloca(srs->hashlength + 1);
 		srs_hash_create(srs, srshash, 2, srshost, srsuser);
@@ -245,7 +254,8 @@ srs_compile_guarded(srs_t *srs,
 }
 
 int
-srs_forward(srs_t *srs,char *buf, int buflen, char *sender, char *alias)
+srs_forward(srs_t *srs, char *buf, int buflen,
+				const char *sender, const char *alias)
 {
 	char	*senduser;
 	char	*sendhost;
@@ -254,7 +264,7 @@ srs_forward(srs_t *srs,char *buf, int buflen, char *sender, char *alias)
 
 	/* This is allowed to be a plain domain */
 	while ((tmp = strchr(alias, '@')) != NULL)
-		alias = tmp;
+		alias = tmp + 1;
 
 	tmp = strchr(sender, '@');
 	if (tmp == NULL)
@@ -280,5 +290,5 @@ srs_forward(srs_t *srs,char *buf, int buflen, char *sender, char *alias)
 	*tmp = '\0';
 
 	/* XXX Check strategy */
-	return srs_compile_guarded(srs, buf, buflen, senduser, sendhost, alias);
+	return srs_compile_guarded(srs, buf, buflen, sendhost, senduser, alias);
 }

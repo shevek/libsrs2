@@ -12,6 +12,7 @@ WriteMakefile(
 	AUTHOR			=> 'Shevek <cpan@anarres.org>',
 	PREREQ_PM		=> { },
 	OPTIMIZE		=> $cflags,
+	LIBS			=> [ '-L../libsrs/.libs -lsrs', ],
 );
 
 sub MY::postamble {

@@ -1,4 +1,4 @@
-package Text::SRS_XS;
+package Mail::SRS_XS;
 
 use strict;
 eval { require warnings; };
@@ -10,7 +10,7 @@ require DynaLoader;
 $VERSION = "0.01";
 @ISA = qw(DynaLoader);
 
-bootstrap Text::SRS_XS;
+bootstrap Mail::SRS_XS;
 
 =head1 NAME
 
@@ -23,6 +23,9 @@ compatability with the existing Mail::SRS implementation. It is not
 primarily used for standalone use as an SRS implementation - you
 should be using the original Mail::SRS for that; it should not be
 noticeably slower.
+
+This package also may not implement all the features of the full
+Mail::SRS, although the intent is to perform regression testing.
 
 =head1 SUPPORT
 

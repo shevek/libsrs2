@@ -47,10 +47,18 @@ struct _srs_t {
 	bool	  alwaysrewrite;	/* Rewrite even into same domain? */
 } srs_t;
 
+/* Interface */
+srs_t	*srs_new();
+int		 srs_forward(srs_t *srs, char *buf, int buflen,
+				const char *sender, const char *alias);
+const char *
+		srs_strerror(int code);
+void	 srs_add_secret(srs_t *srs, const char *secret);
 
 #define SRS_PARAM_DECLARE(n, t) \
 	void srs_set_ ## n (srs_t *srs, t value); \
 	t srs_get_ ## n (srs_t *srs);
+
 
 __END_DECLS
 
