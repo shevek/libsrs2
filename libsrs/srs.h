@@ -30,6 +30,11 @@ __BEGIN_DECLS
 #define SRS_ENOSRS1USER			8
 #define SRS_EHASHTOOSHORT		9
 #define SRS_EHASHINVALID		10
+#define SRS_ENOSECRETS			11
+#define SRS_ENOTSRSADDRESS		12
+#define SRS_ENOSRS1HASH			13
+#define SRS_ENOSRS0HASH			14
+#define SRS_ENOSRS0STAMP		15
 
 typedef
 struct _srs_t {

@@ -2,15 +2,58 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
+#include <openssl/hmac.h>
 #include "srs.h"
+
+#ifndef EVP_MAX_MD_SIZE
+#define EVP_MAX_MD_SIZE (16+20) /* The SSLv3 md5+sha1 type */
+#endif
+
+	/* Use this */
+#define STRINGP(s) ((s != NULL) || (*(s) != '\0'))
 
 static const char *srs_separators = "=-+";
 
 const char *
 srs_strerror(int code)
 {
-	/* XXX Fill these in */
-	return "Error!";
+	switch (code) {
+		case SRS_SUCCESS:
+			return "Success";
+		case SRS_ENOSENDERATSIGN:
+			return "No at sign in sender address";
+		case SRS_EBUFTOOSMALL:
+			return "Buffer too small.";
+		case SRS_EBADTIMESTAMPCHAR:
+			return "Bad base32 character in timestamp.";
+		case SRS_ETIMESTAMPOUTOFDATE:
+			return "Time stamp out of date.";
+		case SRS_ENOSRS0HOST:
+			return "No host in SRS0 address.";
+		case SRS_ENOSRS0USER:
+			return "No user in SRS0 address.";
+		case SRS_ENOSRS1HOST:
+			return "No host in SRS1 address.";
+		case SRS_ENOSRS1USER:
+			return "No user in SRS1 address.";
+		case SRS_EHASHTOOSHORT:
+			return "Hash too short in SRS address.";
+		case SRS_EHASHINVALID:
+			return "Hash invalid in SRS address.";
+		case SRS_ENOSECRETS:
+			return "No secrets in SRS configuration.";
+		case SRS_ENOTSRSADDRESS:
+			return "Not an SRS address.";
+		case SRS_ENOSRS1HASH:
+			return "No hash in SRS1 address.";
+		case SRS_ENOSRS0HASH:
+			return "No hash in SRS0 address.";
+		case SRS_ENOSRS0STAMP:
+			return "No timestamp in SRS0 address.";
+		default:
+			return "Unknown error in SRS library.";
+	}
 }
 
 srs_t *
@@ -80,9 +123,9 @@ srs_timestamp_create(srs_t *srs, char *buf)
 
 	time(&now);
 	now = now / SRS_TIME_PRECISION;
-	buf[0] = SRS_TIME_BASECHARS[now & ((1 << SRS_TIME_BASEBITS) - 1)];
-	now = now >> SRS_TIME_BASEBITS;
 	buf[1] = SRS_TIME_BASECHARS[now & ((1 << SRS_TIME_BASEBITS) - 1)];
+	now = now >> SRS_TIME_BASEBITS;
+	buf[0] = SRS_TIME_BASECHARS[now & ((1 << SRS_TIME_BASEBITS) - 1)];
 	buf[2] = '\0';
 }
 
@@ -115,20 +158,93 @@ srs_timestamp_check(srs_t *srs, char *stamp)
 	return SRS_ETIMESTAMPOUTOFDATE;
 }
 
-static void
+const char *SRS_HASH_BASECHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+								 "abcdefghijklnmopqrstuvwxyz"
+								 "0123456789+/";
+
+static int
 srs_hash_create_v(srs_t *srs, char *buf, int nargs, va_list ap)
 {
-	strncpy(buf, "XXXXHASH", srs->hashlength);
+	HMAC_CTX		 ctx;
+	char			 srshash[EVP_MAX_MD_SIZE + 1];
+	int				 srshashlen;
+	char			*secret;
+	char			*data;
+	int				 len;
+	char			*lcdata;
+	unsigned char	*hp;
+	char			*bp;
+	int				 i;
+	int				 j;
+
+	if (srs->secrets == NULL)
+		return SRS_ENOSECRETS;
+	secret = srs->secrets[0];
+	if (secret == NULL)
+		return SRS_ENOSECRETS;
+
+	HMAC_CTX_init(&ctx);
+	HMAC_Init(&ctx, secret, strlen(secret), EVP_sha1());
+
+	for (i = 0; i < nargs; i++) {
+		data = va_arg(ap, char *);
+		len = strlen(data);
+		lcdata = alloca(len + 1);
+		for (j = 0; j < len; j++) {
+			if (isupper(data[j]))
+				lcdata[j] = tolower(data[j]);
+			else
+				lcdata[j] = data[j];
+		}
+		HMAC_Update(&ctx, lcdata, len);
+	}
+
+	HMAC_Final(&ctx, srshash, &srshashlen);
+	HMAC_CTX_cleanup(&ctx);
+
+	srshash[EVP_MAX_MD_SIZE] = '\0';
+
+	/* A little base64 encoding. Just a little. */
+	hp = (unsigned char *)srshash;
+	bp = buf;
+	for (i = 0; i < srs->hashlength; i++) {
+		switch (i & 0x03) {
+			default:	/* NOTREACHED */
+			case 0:
+				j = (*hp >> 2);
+				break;
+			case 1:
+				j = ((*hp & 0x03) << 4) |
+						((*(hp + 1) & 0xF0) >> 4);
+				hp++;
+				break;
+			case 2:
+				j = ((*hp & 0x0F) << 2) |
+						((*(hp + 1) & 0xC0) >> 6);
+				hp++;
+				break;
+			case 3:
+				j = (*hp++ & 0x3F);
+				break;
+		}
+		*bp++ = SRS_HASH_BASECHARS[j];
+	}
+
+	*bp = '\0';
 	buf[srs->hashlength] = '\0';
+
+	return SRS_SUCCESS;
 }
 
-void
+int
 srs_hash_create(srs_t *srs, char *buf, int nargs, ...)
 {
-	va_list	ap;
+	va_list	 ap;
+	int		 ret;
 	va_start(ap, nargs);
-	srs_hash_create_v(srs, buf, nargs, ap);
+	ret = srs_hash_create_v(srs, buf, nargs, ap);
 	va_end(ap);
+	return ret;
 }
 
 int
@@ -138,6 +254,7 @@ srs_hash_check(srs_t *srs, char *hash, int nargs, ...)
 	char	*srshash;
 	char	*tmp;
 	int		 len;
+	int		 ret;
 
 	len = strlen(hash);
 	if (len < srs->hashmin)
@@ -151,8 +268,10 @@ srs_hash_check(srs_t *srs, char *hash, int nargs, ...)
 	}
 	va_start(ap, nargs);
 	srshash = alloca(srs->hashlength + 1);
-	srs_hash_create_v(srs, srshash, nargs, ap);
+	ret = srs_hash_create_v(srs, srshash, nargs, ap);
 	va_end(ap);
+	if (ret != SRS_SUCCESS)
+		return ret;
 	if (strncasecmp(hash, srshash, len) != 0)
 		return SRS_EHASHINVALID;
 	return SRS_SUCCESS;
@@ -168,7 +287,7 @@ srs_compile_shortcut(srs_t *srs,
 	int		 len;
 
 	/* This never happens if we get called from guarded() */
-	if ((strncasecmp(senduser, "SRS0", 4) == 0) &&
+	if ((strncasecmp(senduser, SRS0TAG, 4) == 0) &&
 		(strchr(srs_separators, senduser[4]) != NULL)) {
 		sendhost = senduser + 5;
 		if (*sendhost == '\0')
@@ -208,7 +327,7 @@ srs_compile_guarded(srs_t *srs,
 	char	*srshash;
 	int		 len;
 
-	if ((strncasecmp(senduser, "SRS1", 4) == 0) &&
+	if ((strncasecmp(senduser, SRS1TAG, 4) == 0) &&
 		(strchr(srs_separators, senduser[4]) != NULL)) {
 		srshost = senduser + 5;
 		if (*srshost == '\0')
@@ -230,19 +349,21 @@ srs_compile_guarded(srs_t *srs,
 								aliashost);
 		return SRS_SUCCESS;
 	}
-	else if ((strncasecmp(senduser, "SRS0", 4) == 0) &&
+	else if ((strncasecmp(senduser, SRS0TAG, 4) == 0) &&
 		(strchr(srs_separators, senduser[4]) != NULL)) {
+		srsuser = senduser + 4;
+		srshost = sendhost;
 		srshash = alloca(srs->hashlength + 1);
-		srs_hash_create(srs, srshash, 2, sendhost, senduser);
+		srs_hash_create(srs, srshash, 2, srshost, srsuser);
 		len = strlen(SRS1TAG) + 1 +
 			srs->hashlength + 1 +
-				strlen(sendhost) + 1 + strlen(senduser)
+				strlen(srshost) + 1 + strlen(srsuser)
 			+ 1 + strlen(aliashost);
 		if (len >= buflen)
 			return SRS_EBUFTOOSMALL;
 		sprintf(buf, SRS1TAG "%c%s%c%s%c%s@%s", srs->separator,
 						srshash, SRSSEP,
-							sendhost, SRSSEP, senduser,
+							srshost, SRSSEP, srsuser,
 								aliashost);
 	}
 	else {
@@ -251,6 +372,73 @@ srs_compile_guarded(srs_t *srs,
 	}
 
 	return SRS_SUCCESS;
+}
+
+int
+srs_parse_shortcut(srs_t *srs, char *buf, int buflen, char *senduser)
+{
+	char	*srshash;
+	char	*srsstamp;
+	char	*srshost;
+	char	*srsuser;
+	int		 ret;
+
+	if (strncasecmp(senduser, SRS0TAG, 4) == 0) {
+		srshash = senduser + 5;
+		if (!STRINGP(srshash))
+			return SRS_ENOSRS0HASH;
+		srsstamp = strchr(srshash, SRSSEP);
+		if (!STRINGP(srsstamp))
+			return SRS_ENOSRS0STAMP;
+		*srsstamp++ = '\0';
+		srshost = strchr(srsstamp, SRSSEP);
+		if (!STRINGP(srshost))
+			return SRS_ENOSRS0HOST;
+		*srshost++ = '\0';
+		srsuser = strchr(srshost, SRSSEP);
+		if (!STRINGP(srsuser))
+			return SRS_ENOSRS0USER;
+		*srsuser++ = '\0';
+		ret = srs_hash_check(srs, srshash, 3, srsstamp,
+						srshost, srsuser);
+		if (ret != SRS_SUCCESS)
+			return ret;
+		sprintf(buf, "%s@%s", srsuser, srshost);
+		return SRS_SUCCESS;
+	}
+
+	return SRS_ENOTSRSADDRESS;
+}
+
+int
+srs_parse_guarded(srs_t *srs, char *buf, int buflen, char *senduser)
+{
+	char	*srshash;
+	char	*srshost;
+	char	*srsuser;
+	int		 ret;
+
+	if (strncasecmp(senduser, SRS1TAG, 4) == 0) {
+		srshash = senduser + 5;
+		if (!STRINGP(srshash))
+			return SRS_ENOSRS1HASH;
+		srshost = strchr(srshash, SRSSEP);
+		if (!STRINGP(srshost))
+			return SRS_ENOSRS1HOST;
+		*srshost++ = '\0';
+		srsuser = strchr(srshost, SRSSEP);
+		if (!STRINGP(srsuser))
+			return SRS_ENOSRS1USER;
+		*srsuser++ = '\0';
+		ret = srs_hash_check(srs, srshash, 2, srshost, srsuser);
+		if (ret != SRS_SUCCESS)
+			return ret;
+		sprintf(buf, SRS0TAG "%s@%s", srsuser, srshost);
+		return SRS_SUCCESS;
+	}
+	else {
+		return srs_parse_shortcut(srs, buf, buflen, senduser);
+	}
 }
 
 int
@@ -290,5 +478,29 @@ srs_forward(srs_t *srs, char *buf, int buflen,
 	*tmp = '\0';
 
 	/* XXX Check strategy */
-	return srs_compile_guarded(srs, buf, buflen, sendhost, senduser, alias);
+	return srs_compile_guarded(srs, buf, buflen,
+					sendhost, senduser, alias);
+}
+
+int
+srs_reverse(srs_t *srs, char *buf, int buflen, const char *sender)
+{
+	char	*senduser;
+	char	*tmp;
+	int		 len;
+
+	if (strncasecmp(sender, "SRS", 3) != 0)
+		return SRS_ENOTSRSADDRESS;
+
+	len = strlen(sender);
+	if (len >= buflen)
+		return SRS_EBUFTOOSMALL;
+	senduser = alloca(len + 1);
+	strcpy(senduser, sender);
+
+	/* We don't really care about the host for reversal. */
+	tmp = strchr(senduser, '@');
+	if (tmp != NULL)
+		*tmp = '\0';
+	return srs_parse_guarded(srs, buf, buflen, senduser);
 }

@@ -10,7 +10,9 @@ WriteMakefile(
 	VERSION_FROM	=> 'SRS_XS.pm',
     ABSTRACT_FROM	=> "SRS_XS.pm",
 	AUTHOR			=> 'Shevek <cpan@anarres.org>',
-	PREREQ_PM		=> { },
+	PREREQ_PM		=> {
+					'Mail::SRS'		=> 0.30,
+						},
 	OPTIMIZE		=> $cflags,
 	LIBS			=> [ '-L../libsrs/.libs -lsrs', ],
 );

@@ -45,3 +45,19 @@ forward(srs, sender, alias)
 			RETVAL = buf;
 	OUTPUT:
 		RETVAL
+
+const char *
+reverse(srs, sender)
+	Mail::SRS_XS	srs
+	const char *	sender
+	PREINIT:
+		char	buf[BUFSIZ];
+		int		ret;
+	CODE:
+		ret = srs_reverse(srs, buf, BUFSIZ, sender);
+		if (ret != SRS_SUCCESS)
+			croak(srs_strerror(ret));
+		else
+			RETVAL = buf;
+	OUTPUT:
+		RETVAL
