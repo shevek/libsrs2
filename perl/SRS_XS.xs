@@ -1,7 +1,7 @@
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
-#include "../libsrs/srs.h"
+#include "../libsrs2/srs2.h"
 
 #ifndef BUFSIZ
 #define BUFSIZ 4096

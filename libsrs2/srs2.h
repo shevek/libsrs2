@@ -1,9 +1,36 @@
+/* Copyright (c) 2004 Shevek (srs@anarres.org)
+ * All rights reserved.
+ *
+ * This file is a part of libsrs2 from http://www.libsrs2.org/
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, under the terms of either the GNU General Public
+ * License version 2 or the BSD license, at the discretion of the
+ * user. Copies of these licenses have been included in the libsrs2
+ * distribution. See the the file called LICENSE for more
+ * information.
+ */
+
 #ifndef __SRS_H__
 #define __SRS_H__
 
+#include "../config.h"
+
+#ifdef HAVE_TIME_H
 #include <time.h>       /* time */
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>  /* tyepdefs */
+#endif
+
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>   /* timeval / timezone struct */
+#endif
+
+#ifdef _WIN32
+#include "win32.h"
+#endif
 
 __BEGIN_DECLS
 

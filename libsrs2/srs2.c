@@ -1,17 +1,42 @@
+/* Copyright (c) 2004 Shevek (srs@anarres.org)
+ * All rights reserved.
+ *
+ * This file is a part of libsrs2 from http://www.libsrs2.org/
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, under the terms of either the GNU General Public
+ * License version 2 or the BSD license, at the discretion of the
+ * user. Copies of these licenses have been included in the libsrs2
+ * distribution. See the the file called LICENSE for more
+ * information.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include <openssl/hmac.h>
-#include "srs.h"
+#include "srs2.h"
+
+#ifdef _WIN32
+#include "win32.h"
+#endif
 
 #ifndef EVP_MAX_MD_SIZE
 #define EVP_MAX_MD_SIZE (16+20) /* The SSLv3 md5+sha1 type */
 #endif
 
-#ifdef _WIN32
-#define alloca _alloca
+#ifndef HAVE_STRCASECMP
+# ifdef HAVE__STRICMP
+#  define strcasecmp _stricmp
+# endif
+#endif
+
+#ifndef HAVE_STRNCASECMP
+# ifdef HAVE__STRNICMP
+#  define strcasecmp _stricmp
+# endif
 #endif
 
 	/* Use this */
@@ -60,10 +85,9 @@ srs_strerror(int code)
 	}
 }
 
-srs_t *
-srs_new()
+void
+srs_init(srs_t *srs)
 {
-	srs_t	*srs = (srs_t *)malloc(sizeof(srs_t));
 	srs->secrets = NULL;
 	srs->numsecrets = 0;
 	srs->separator = '=';
@@ -80,16 +104,6 @@ srs_add_secret(srs_t *srs, const char *secret)
 	int		newlen = (srs->numsecrets + 1) * sizeof(char *);
 	srs->secrets = (char **)realloc(srs->secrets, newlen);
 	srs->secrets[srs->numsecrets++] = strdup(secret);
-}
-
-void
-srs_add_secrets(srs_t *srs, FILE *fp)
-{
-	char	line[BUFSIZ];
-	while (fgets(line, BUFSIZ, stdin)) {
-		line[strcspn(line, "\r\n")] = '\0';
-		srs_add_secret(srs, line);
-	}
 }
 
 #define SRS_PARAM_DEFINE(n, t) \

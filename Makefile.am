@@ -1,5 +1,5 @@
-SUBDIRS = libsrs tools
-EXTRA_DIST = perl
+SUBDIRS = libsrs2 tools
+EXTRA_DIST = perl win32
 
 dist-hook:
 	find $(distdir)/perl -name .svn | xargs rm -rf

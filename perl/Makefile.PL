@@ -14,7 +14,7 @@ WriteMakefile(
 					'Mail::SRS'		=> 0.30,
 						},
 	OPTIMIZE		=> $cflags,
-	LIBS			=> [ '-L../libsrs/.libs -lsrs', ],
+	LIBS			=> [ '-L../libsrs2/.libs -lsrs2', ],
 );
 
 sub MY::postamble {

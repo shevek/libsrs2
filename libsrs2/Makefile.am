@@ -1,14 +1,13 @@
 CFLAGS = -Wall @CFLAGS@
 
-noinst_HEADERS = srs.c
-include_HEADERS = srs.h
+include_HEADERS = srs2.h
 
-lib_LIBRARIES = libsrs.a
-libsrs_a_SOURCES = srs.c
+lib_LIBRARIES = libsrs2.a
+libsrs2_a_SOURCES = srs2.c
 
-lib_LTLIBRARIES = libsrs.la
-libsrs_la_LIBADD = -lcrypto
-libsrs_la_LDFLAGS = -version-info 0:0:0
-libsrs_la_SOURCES = srs.c
+lib_LTLIBRARIES = libsrs2.la
+libsrs2_la_LIBADD = -lcrypto
+libsrs2_la_LDFLAGS = -version-info 0:0:0
+libsrs2_la_SOURCES = srs2.c
 
 # -Wl,-soname,libsrs.so.1
