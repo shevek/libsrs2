@@ -7,7 +7,7 @@
 
 Summary: SRS email address rewriting engine
 Name: libsrs2
-Version: 1.0.10
+Version: 1.0.11
 Release: 4%{?redhatvers:.%{redhatvers}}
 License: GPL
 Group: System Environment/Libraries
@@ -24,7 +24,6 @@ the sender address must be rewritten to comply with SPF policy. The
 Sender Rewriting Scheme, or SRS, provides a standard for this
 rewriting which is not vulnerable to attacks by spammers.
 
-
 %prep
 %setup -q
 
@@ -38,8 +37,8 @@ make %{?_smp_mflags} RPM_OPT_FLAGS="$RPM_OPT_FLAGS"
 %install
 if [ ! $RPM_BUILD_ROOT = "/" ]; then
 	%{__rm} -rf $RPM_BUILD_ROOT;
-	mkdir -p $RPM_BUILD_ROOT%{prefix}/bin
-	mkdir -p $RPM_BUILD_ROOT${prefix}/lib
+	mkdir -p $RPM_BUILD_ROOT%{_prefix}/bin
+	mkdir -p $RPM_BUILD_ROOT%{_prefix}/lib
 fi
 make DESTDIR=%{buildroot} install
 
@@ -50,9 +49,12 @@ if [ ! %{buildroot} = "/" ]; then %{__rm} -rf %{buildroot}; fi
 
 %files
 %defattr(-,root,root)
-%doc ChangeLog INSTALL README.configure
-%{_mandir}/lib/libsrs.so.0.0.0
-%{_prefix}/bin/srs
+%doc ChangeLog INSTALL README NEWS AUTHORS COPYING
+%{_libdir}/libsrs2.so.*
+%{_libdir}/libsrs2.a
+%{_libdir}/libsrs2.la
+%{_bindir}/srs
+%{_prefix}/include/srs2.h
 
 
 ###
