@@ -1,0 +1,7 @@
+This package is autoconfed.
+
+Run ./configure
+Run make
+Run make install
+
+Run ./configure --help for help with configuration parameters.
