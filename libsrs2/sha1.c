@@ -4,12 +4,49 @@
 /* from Peter C. Gutmann's implementation as found in */
 /* Applied Cryptography by Bruce Schneier */
 /* Further modifications to include the "UNRAVEL" stuff, below */
+/* HMAC functions by Shevek <srs@anarres.org> for inclusion in
+ * libsrs2, under GPL-2 or BSD license. Combine this lot in any way
+ * you think will stand up in court. I hope my intent is clear. */
 
 /* This code is in the public domain */
 
 /* Useful defines & typedefs */
 
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
+#ifdef _WIN32
+#include "win32.h"
+#endif
+
+#ifdef HAVE_STDARG_H
+#include <stdarg.h>
+#endif
+
+#ifdef HAVE_TIME_H
+#include <time.h>       /* time */
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>  /* tyepdefs */
+#endif
+
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>   /* timeval / timezone struct */
+#endif
+
+#ifdef HAVE_STRING_H
+#include <string.h>		/* memcpy, strcpy, memset */
+#endif
+
 #include "srs2.h"
+
+#ifdef SIZEOF_UNSIGNED_LONG
+#if SIZEOF_UNSIGNED_LONG < 4
+#error "SHA1 requires an unsigned long of at least 32 bits"
+#endif
+#endif
 
 #ifdef WORDS_BIGENDIAN
 #define BYTEORDER 0x4321

@@ -11,42 +11,24 @@
  * information.
  */
 
-#ifndef __SRS_H__
-#define __SRS_H__
-
-#ifdef _WIN32
-#include "win32.h"
-#endif
-
-#ifdef HAVE_CONFIG_H
-#include "../config.h"
-#endif
-
-#ifdef HAVE_TIME_H
-#include <time.h>       /* time */
-#endif
-
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>  /* tyepdefs */
-#endif
-
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>   /* timeval / timezone struct */
-#endif
-
-#ifdef HAVE_STRING_H
-#include <string.h>		/* memcpy, strcpy, memset */
-#endif
+#ifndef __SRS2_H__
+#define __SRS2_H__
 
 __BEGIN_DECLS
+
+#define SRS_VERSION_MAJOR			1
+#define SRS_VERSION_MINOR			0
+#define SRS_VERSION_PATCHLEVEL		14
+#define SRS_VERSION_FROM(m, n, p)	(((m) << 16) + ((n) << 8) + (p))
+#define SRS_VERSION		SRS_VERSION_FROM(SRS_VERSION_MAJOR, \
+										SRS_VERSION_MINOR, \
+										SRS_VERSION_PATCHLEVEL)
 
 /* This is ugly, but reasonably safe. */
 #undef TRUE
 #define TRUE 1
 #undef FALSE
 #define FALSE 0
-#undef bool
-#define bool char
 
 #define SRSSEP	'='
 #define SRS0TAG	"SRS0"
@@ -87,11 +69,17 @@ __BEGIN_DECLS
 
 /* SRS implementation */
 
-#define SRS_ADDRESS_P(x) ( \
+#define SRS_IS_SRS_ADDRESS(x) ( \
 				(strncasecmp((x), "SRS", 3) == 0) && \
 				(strchr("01", (x)[3]) != NULL) && \
 				(strchr("-+=", (x)[4]) != NULL) \
 			)
+
+typedef void *(*srs_malloc_t)(size_t);
+typedef void *(*srs_realloc_t)(void *, size_t);
+typedef void (*srs_free_t)(void *);
+
+typedef int srs_bool;
 
 typedef
 struct _srs_t {
@@ -106,10 +94,11 @@ struct _srs_t {
 	int		  hashmin;
 
 	/* Behaviour parameters */
-	bool	  alwaysrewrite;	/* Rewrite even into same domain? */
+	srs_bool  alwaysrewrite;	/* Rewrite even into same domain? */
 } srs_t;
 
 /* Interface */
+int		 srs_set_malloc(srs_malloc_t m, srs_realloc_t r, srs_free_t f);
 srs_t	*srs_new();
 void	 srs_init(srs_t *srs);
 void	 srs_free(srs_t *srs);
@@ -122,18 +111,18 @@ int		 srs_reverse(srs_t *srs, char *buf, int buflen,
 int		 srs_reverse_alloc(srs_t *srs, char **sptr, const char *sender);
 const char *
 		 srs_strerror(int code);
-void	 srs_add_secret(srs_t *srs, const char *secret);
+int		 srs_add_secret(srs_t *srs, const char *secret);
 const char *
 		 srs_get_secret(srs_t *srs, int idx);
 	/* You probably shouldn't call these. */
-void	 srs_timestamp_create(srs_t *srs, char *buf, time_t now);
+int		 srs_timestamp_create(srs_t *srs, char *buf, time_t now);
 int		 srs_timestamp_check(srs_t *srs, const char *stamp);
 
 #define SRS_PARAM_DECLARE(n, t) \
 	int srs_set_ ## n (srs_t *srs, t value); \
 	t srs_get_ ## n (srs_t *srs);
 
-SRS_PARAM_DECLARE(alwaysrewrite, bool)
+SRS_PARAM_DECLARE(alwaysrewrite, srs_bool)
 SRS_PARAM_DECLARE(separator, char)
 SRS_PARAM_DECLARE(maxage, int)
 SRS_PARAM_DECLARE(hashlength, int)
@@ -141,9 +130,6 @@ SRS_PARAM_DECLARE(hashmin, int)
 
 /* SHA1 implementation */
 
-#if SIZEOF_UNSIGNED_LONG < 4
-#error "SHA1 requires an unsigned long of at least 32 bits"
-#endif
 typedef unsigned long	ULONG;	 /* 32-or-more-bit quantity */
 typedef unsigned char	sha_byte;
 

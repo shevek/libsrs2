@@ -15,12 +15,40 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
 #include <ctype.h>
+
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
+#ifdef _WIN32
+#include "win32.h"
+#endif
+
+#ifdef HAVE_STDARG_H
+#include <stdarg.h>
+#endif
+
+#ifdef HAVE_TIME_H
+#include <time.h>       /* time */
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>  /* tyepdefs */
+#endif
+
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>   /* timeval / timezone struct */
+#endif
+
+#ifdef HAVE_STRING_H
+#include <string.h>		/* memcpy, strcpy, memset */
+#endif
+
 #ifdef USE_OPENSSL
 #include <openssl/hmac.h>
 #endif
+
 #include "srs2.h"
 
 #ifndef EVP_MAX_MD_SIZE
@@ -43,6 +71,19 @@
 #define STRINGP(s) ((s != NULL) || (*(s) != '\0'))
 
 static const char *srs_separators = "=-+";
+
+static srs_malloc_t		srs_f_malloc	= malloc;
+static srs_realloc_t	srs_f_realloc	= realloc;
+static srs_free_t		srs_f_free		= free;
+
+int		
+srs_set_malloc(srs_malloc_t m, srs_realloc_t r, srs_free_t f)
+{
+	srs_f_malloc = m;
+	srs_f_realloc = r;
+	srs_f_free = f;
+	return SRS_SUCCESS;
+}
 
 const char *
 srs_strerror(int code)
@@ -100,7 +141,7 @@ srs_strerror(int code)
 srs_t *
 srs_new()
 {
-	srs_t	*srs = (srs_t *)malloc(sizeof(srs_t));
+	srs_t	*srs = (srs_t *)srs_f_malloc(sizeof(srs_t));
 	srs_init(srs);
 	return srs;
 }
@@ -124,18 +165,19 @@ srs_free(srs_t *srs)
 	int	 i;
 	for (i = 0; i < srs->numsecrets; i++) {
 		memset(srs->secrets[i], 0, strlen(srs->secrets[i]));
-		free(srs->secrets[i]);
+		srs_f_free(srs->secrets[i]);
 		srs->secrets[i] = '\0';
 	}
-	free(srs);
+	srs_f_free(srs);
 }
 
-void
+int
 srs_add_secret(srs_t *srs, const char *secret)
 {
 	int		newlen = (srs->numsecrets + 1) * sizeof(char *);
-	srs->secrets = (char **)realloc(srs->secrets, newlen);
+	srs->secrets = (char **)srs_f_realloc(srs->secrets, newlen);
 	srs->secrets[srs->numsecrets++] = strdup(secret);
+	return SRS_SUCCESS;
 }
 
 const char *
@@ -174,7 +216,7 @@ SRS_PARAM_DEFINE(maxage, int)
 	/* XXX Check hashlength >= hashmin */
 SRS_PARAM_DEFINE(hashlength, int)
 SRS_PARAM_DEFINE(hashmin, int)
-SRS_PARAM_DEFINE(alwaysrewrite, bool)
+SRS_PARAM_DEFINE(alwaysrewrite, srs_bool)
 
 /* Don't mess with these unless you know what you're doing well
  * enough to rewrite the timestamp functions. These are based on
@@ -188,7 +230,7 @@ const char *SRS_TIME_BASECHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 #define SRS_TIME_SIZE		2
 #define SRS_TIME_SLOTS		(1<<(SRS_TIME_BASEBITS<<(SRS_TIME_SIZE-1)))
 
-void
+int
 srs_timestamp_create(srs_t *srs, char *buf, time_t now)
 {
 	now = now / SRS_TIME_PRECISION;
@@ -196,6 +238,7 @@ srs_timestamp_create(srs_t *srs, char *buf, time_t now)
 	now = now >> SRS_TIME_BASEBITS;
 	buf[0] = SRS_TIME_BASECHARS[now & ((1 << SRS_TIME_BASEBITS) - 1)];
 	buf[2] = '\0';
+	return SRS_SUCCESS;
 }
 
 int
@@ -210,7 +253,7 @@ srs_timestamp_check(srs_t *srs, const char *stamp)
 	/* We had better go around this loop exactly twice! */
 	then = 0;
 	for (sp = stamp; *sp; sp++) {
-		bp = strchr(SRS_TIME_BASECHARS, *sp);
+		bp = strchr(SRS_TIME_BASECHARS, toupper(*sp));
 		if (bp == NULL)
 			return SRS_EBADTIMESTAMPCHAR;
 		off = bp - SRS_TIME_BASECHARS;
@@ -376,6 +419,7 @@ srs_compile_shortcut(srs_t *srs,
 	char	*srshash;
 	char	 srsstamp[SRS_TIME_SIZE + 1];
 	int		 len;
+	int		 ret;
 
 	/* This never happens if we get called from guarded() */
 	if ((strncasecmp(senduser, SRS0TAG, 4) == 0) &&
@@ -396,9 +440,13 @@ srs_compile_shortcut(srs_t *srs,
 	if (len >= buflen)
 		return SRS_EBUFTOOSMALL;
 
-	srs_timestamp_create(srs, srsstamp, time(NULL));
+	ret = srs_timestamp_create(srs, srsstamp, time(NULL));
+	if (ret != SRS_SUCCESS)
+		return ret;
 	srshash = alloca(srs->hashlength + 1);
-	srs_hash_create(srs, srshash, 3, srsstamp, sendhost, senduser);
+	ret = srs_hash_create(srs, srshash,3, srsstamp, sendhost, senduser);
+	if (ret != SRS_SUCCESS)
+		return ret;
 
 	sprintf(buf, SRS0TAG "%c%s%c%s%c%s%c%s@%s", srs->separator,
 					srshash, SRSSEP, srsstamp, SRSSEP,
@@ -417,6 +465,7 @@ srs_compile_guarded(srs_t *srs,
 	char	*srsuser;
 	char	*srshash;
 	int		 len;
+	int		 ret;
 
 	if ((strncasecmp(senduser, SRS1TAG, 4) == 0) &&
 		(strchr(srs_separators, senduser[4]) != NULL)) {
@@ -427,7 +476,9 @@ srs_compile_guarded(srs_t *srs,
 		if ((srsuser == NULL) || (*srsuser == '\0'))
 			return SRS_ENOSRS1USER;
 		srshash = alloca(srs->hashlength + 1);
-		srs_hash_create(srs, srshash, 2, srshost, srsuser);
+		ret = srs_hash_create(srs, srshash, 2, srshost, srsuser);
+		if (ret != SRS_SUCCESS)
+			return ret;
 		len = strlen(SRS1TAG) + 1 +
 			srs->hashlength + 1 +
 				strlen(srshost) + 1 + strlen(srsuser)
@@ -445,7 +496,9 @@ srs_compile_guarded(srs_t *srs,
 		srsuser = senduser + 4;
 		srshost = sendhost;
 		srshash = alloca(srs->hashlength + 1);
-		srs_hash_create(srs, srshash, 2, srshost, srsuser);
+		ret = srs_hash_create(srs, srshash, 2, srshost, srsuser);
+		if (ret != SRS_SUCCESS)
+			return ret;
 		len = strlen(SRS1TAG) + 1 +
 			srs->hashlength + 1 +
 				strlen(srshost) + 1 + strlen(srsuser)
@@ -590,14 +643,14 @@ srs_forward_alloc(srs_t *srs, char **sptr,
 
 	/* strlen(SRSxTAG) + strlen("====+@") < 64 */
 	len = slen + alen + srs->hashlength + SRS_TIME_SIZE + 64;
-	buf = (char *)malloc(len);
+	buf = (char *)srs_f_malloc(len);
 
 	ret = srs_forward(srs, buf, len, sender, alias);
 
 	if (ret == SRS_SUCCESS)
 		*sptr = buf;
 	else
-		free(buf);
+		srs_f_free(buf);
 
 	return ret;
 }
@@ -609,7 +662,7 @@ srs_reverse(srs_t *srs, char *buf, int buflen, const char *sender)
 	char	*tmp;
 	int		 len;
 
-	if (strncasecmp(sender, "SRS", 3) != 0)
+	if (!SRS_IS_SRS_ADDRESS(sender))
 		return SRS_ENOTSRSADDRESS;
 
 	len = strlen(sender);
@@ -634,18 +687,18 @@ srs_reverse_alloc(srs_t *srs, char **sptr, const char *sender)
 
 	*sptr = NULL;
 
-	if (strncasecmp(sender, "SRS", 3) != 0)
+	if (!SRS_IS_SRS_ADDRESS(sender))
 		return SRS_ENOTSRSADDRESS;
 
 	len = strlen(sender) + 1;
-	buf = (char *)malloc(len);
+	buf = (char *)srs_f_malloc(len);
 
 	ret = srs_reverse(srs, buf, len, sender);
 
 	if (ret == SRS_SUCCESS)
 		*sptr = buf;
 	else
-		free(buf);
+		srs_f_free(buf);
 
 	return ret;
 }
