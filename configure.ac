@@ -1,4 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
+
 AC_INIT(libsrs2/srs2.h)
 AM_INIT_AUTOMAKE(libsrs2, 1.0.15)
 
@@ -30,7 +31,7 @@ AC_CHECK_SIZEOF(unsigned long)
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(strings.h time.h sys/time.h sys/types.h unistd.h)
-AC_CHECK_HEADERS(errno.h sys/select.h sys/socket.h stdarg.h)
+AC_CHECK_HEADERS(errno.h sys/select.h sys/socket.h stdarg.h getopt.h)
 
 dnl AC_CHECK_HEADER(openssl/ssl.h, , [
 dnl 	echo "OpenSSL is required to build this library."
