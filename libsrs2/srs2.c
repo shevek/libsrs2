@@ -48,38 +48,50 @@ const char *
 srs_strerror(int code)
 {
 	switch (code) {
+		/* Simple errors */
 		case SRS_SUCCESS:
 			return "Success";
+		case SRS_ENOTSRSADDRESS:
+			return "Not an SRS address.";
+
+		/* Config errors */
+		case SRS_ENOSECRETS:
+			return "No secrets in SRS configuration.";
+
+		/* Input errors */
 		case SRS_ENOSENDERATSIGN:
 			return "No at sign in sender address";
 		case SRS_EBUFTOOSMALL:
 			return "Buffer too small.";
-		case SRS_EBADTIMESTAMPCHAR:
-			return "Bad base32 character in timestamp.";
-		case SRS_ETIMESTAMPOUTOFDATE:
-			return "Time stamp out of date.";
+
+		/* Syntax errors */
 		case SRS_ENOSRS0HOST:
 			return "No host in SRS0 address.";
 		case SRS_ENOSRS0USER:
 			return "No user in SRS0 address.";
-		case SRS_ENOSRS1HOST:
-			return "No host in SRS1 address.";
-		case SRS_ENOSRS1USER:
-			return "No user in SRS1 address.";
-		case SRS_EHASHTOOSHORT:
-			return "Hash too short in SRS address.";
-		case SRS_EHASHINVALID:
-			return "Hash invalid in SRS address.";
-		case SRS_ENOSECRETS:
-			return "No secrets in SRS configuration.";
-		case SRS_ENOTSRSADDRESS:
-			return "Not an SRS address.";
-		case SRS_ENOSRS1HASH:
-			return "No hash in SRS1 address.";
 		case SRS_ENOSRS0HASH:
 			return "No hash in SRS0 address.";
 		case SRS_ENOSRS0STAMP:
 			return "No timestamp in SRS0 address.";
+		case SRS_ENOSRS1HOST:
+			return "No host in SRS1 address.";
+		case SRS_ENOSRS1USER:
+			return "No user in SRS1 address.";
+		case SRS_ENOSRS1HASH:
+			return "No hash in SRS1 address.";
+		case SRS_ESEPARATORINVALID:
+			return "Invalid separator suggested.";
+		case SRS_EBADTIMESTAMPCHAR:
+			return "Bad base32 character in timestamp.";
+		case SRS_EHASHTOOSHORT:
+			return "Hash too short in SRS address.";
+
+		/* SRS errors */
+		case SRS_ETIMESTAMPOUTOFDATE:
+			return "Time stamp out of date.";
+		case SRS_EHASHINVALID:
+			return "Hash invalid in SRS address.";
+
 		default:
 			return "Unknown error in SRS library.";
 	}
@@ -127,15 +139,29 @@ srs_add_secret(srs_t *srs, const char *secret)
 }
 
 #define SRS_PARAM_DEFINE(n, t) \
-	void srs_set_ ## n (srs_t *srs, t value) { \
+	int srs_set_ ## n (srs_t *srs, t value) { \
 		srs->n = value; \
+		return SRS_SUCCESS; \
 	} \
 	t srs_get_ ## n (srs_t *srs) { \
 		return srs->n; \
 	}
 
-	/* XXX Check separator is valid */
-SRS_PARAM_DEFINE(separator, char)
+int
+srs_set_separator(srs_t *srs, char value)
+{
+	if (strchr(srs_separators, value) == NULL)
+		return SRS_ESEPARATORINVALID;
+	srs->separator = value;
+	return SRS_SUCCESS;
+}
+
+char
+srs_get_separator(srs_t *srs)
+{
+	return srs->separator;
+}
+
 SRS_PARAM_DEFINE(maxage, int)
 	/* XXX Check hashlength >= hashmin */
 SRS_PARAM_DEFINE(hashlength, int)
@@ -197,7 +223,7 @@ srs_timestamp_check(srs_t *srs, char *stamp)
 }
 
 const char *SRS_HASH_BASECHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-								 "abcdefghijklnmopqrstuvwxyz"
+								 "abcdefghijklmnopqrstuvwxyz"
 								 "0123456789+/";
 
 static void
@@ -540,9 +566,35 @@ srs_forward(srs_t *srs, char *buf, int buflen,
 	sendhost = tmp + 1;
 	*tmp = '\0';
 
-	/* XXX Check strategy */
 	return srs_compile_guarded(srs, buf, buflen,
 					sendhost, senduser, alias);
+}
+
+int		
+srs_forward_alloc(srs_t *srs, char **sptr,
+				const char *sender, const char *alias)
+{
+	char	*buf;
+	int		 slen;
+	int		 alen;
+	int		 len;
+	int		 ret;
+
+	slen = strlen(sender);
+	alen = strlen(alias);
+
+	/* strlen(SRSxTAG) + strlen("====+@") < 64 */
+	len = slen + alen + srs->hashlength + SRS_TIME_SIZE + 64;
+	buf = (char *)malloc(len);
+
+	ret = srs_forward(srs, buf, len, sender, alias);
+
+	if (ret == SRS_SUCCESS)
+		*sptr = buf;
+	else
+		free(buf);
+
+	return ret;
 }
 
 int
@@ -566,4 +618,29 @@ srs_reverse(srs_t *srs, char *buf, int buflen, const char *sender)
 	if (tmp != NULL)
 		*tmp = '\0';
 	return srs_parse_guarded(srs, buf, buflen, senduser);
+}
+
+int
+srs_reverse_alloc(srs_t *srs, char **sptr, const char *sender)
+{
+	char	*buf;
+	int		 len;
+	int		 ret;
+
+	*sptr = NULL;
+
+	if (strncasecmp(sender, "SRS", 3) != 0)
+		return SRS_ENOTSRSADDRESS;
+
+	len = strlen(sender) + 1;
+	buf = (char *)malloc(len);
+
+	ret = srs_reverse(srs, buf, len, sender);
+
+	if (ret == SRS_SUCCESS)
+		*sptr = buf;
+	else
+		free(buf);
+
+	return ret;
 }

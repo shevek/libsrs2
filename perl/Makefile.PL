@@ -27,16 +27,13 @@ $(INST_DYNAMIC) : ../libsrs2/.libs/libsrs2.so.*
 
 .PHONY : aux dep readme
 
-CPP.c : typemap
-
 aux : readme dep
 
-readme : CPP.pm
-	perldoc -t CPP.pm > README
+readme : SRS_XS.pm
+	perldoc -t SRS_XS.pm > README
 
-dep : $(C_FILES) $(H_FILES)
-	$(RM_F) .depend
-	$(CC) -MM $(INC) -isystem $(PERL_INC) $(CCFLAGS) $(C_FILES) >> .depend
+clean ::
+	rm -f Makefile.old
 
 EON
 	return $old . $new;

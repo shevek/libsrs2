@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(libsrs2/srs2.h)
-AM_INIT_AUTOMAKE(libsrs2, 1.0.12)
+AM_INIT_AUTOMAKE(libsrs2, 1.0.13)
 
 dnl Weird Unix variants
 AC_AIX

@@ -17,7 +17,9 @@
 #ifdef _WIN32
 #include "win32.h"
 #else
-#include "../config.h"
+# ifdef HAVE_CONFIG_H
+#  include "../config.h"
+# endif
 #endif
 
 #ifdef HAVE_TIME_H
@@ -50,22 +52,35 @@ __BEGIN_DECLS
 #define SRS0TAG	"SRS0"
 #define SRS1TAG	"SRS1"
 
-#define SRS_SUCCESS				0
-#define SRS_ENOSENDERATSIGN		1
-#define SRS_EBUFTOOSMALL		2
-#define	SRS_EBADTIMESTAMPCHAR	3
-#define SRS_ETIMESTAMPOUTOFDATE	4
-#define SRS_ENOSRS0HOST			5
-#define SRS_ENOSRS0USER			6
-#define SRS_ENOSRS1HOST			7
-#define SRS_ENOSRS1USER			8
-#define SRS_EHASHTOOSHORT		9
-#define SRS_EHASHINVALID		10
-#define SRS_ENOSECRETS			11
-#define SRS_ENOTSRSADDRESS		12
-#define SRS_ENOSRS1HASH			13
-#define SRS_ENOSRS0HASH			14
-#define SRS_ENOSRS0STAMP		15
+#define SRS_ERRTYPE_MASK		0xF000
+#define SRS_ERRTYPE_CONFIG		0x1000
+#define SRS_ERRTYPE_INPUT		0x2000
+#define SRS_ERRTYPE_SYNTAX		0x4000
+#define SRS_ERRTYPE_BADSRS		0x8000
+
+#define SRS_SUCCESS				(0)
+#define SRS_ENOTSRSADDRESS		(1)
+
+#define SRS_ENOSECRETS			(SRS_ERRTYPE_CONFIG | 1)
+
+#define SRS_ENOSENDERATSIGN		(SRS_ERRTYPE_INPUT | 1)
+#define SRS_EBUFTOOSMALL		(SRS_ERRTYPE_INPUT | 2)
+
+#define SRS_ENOSRS0HOST			(SRS_ERRTYPE_SYNTAX | 1)
+#define SRS_ENOSRS0USER			(SRS_ERRTYPE_SYNTAX | 2)
+#define SRS_ENOSRS0HASH			(SRS_ERRTYPE_SYNTAX | 3)
+#define SRS_ENOSRS0STAMP		(SRS_ERRTYPE_SYNTAX | 4)
+#define SRS_ENOSRS1HOST			(SRS_ERRTYPE_SYNTAX | 5)
+#define SRS_ENOSRS1USER			(SRS_ERRTYPE_SYNTAX | 6)
+#define SRS_ENOSRS1HASH			(SRS_ERRTYPE_SYNTAX | 7)
+#define SRS_ESEPARATORINVALID	(SRS_ERRTYPE_SYNTAX | 8)
+#define	SRS_EBADTIMESTAMPCHAR	(SRS_ERRTYPE_SYNTAX | 9)
+#define SRS_EHASHTOOSHORT		(SRS_ERRTYPE_SYNTAX | 10)
+
+#define SRS_ETIMESTAMPOUTOFDATE	(SRS_ERRTYPE_BADSRS | 1)
+#define SRS_EHASHINVALID		(SRS_ERRTYPE_BADSRS | 2)
+
+#define SRS_ERROR_TYPE(x) ((x) & SRS_ERRTYPE_MASK)
 
 /* SRS implementation */
 
@@ -91,16 +106,23 @@ void	 srs_init(srs_t *srs);
 void	 srs_free(srs_t *srs);
 int		 srs_forward(srs_t *srs, char *buf, int buflen,
 				const char *sender, const char *alias);
+int		 srs_forward_alloc(srs_t *srs, char **sptr,
+				const char *sender, const char *alias);
 int		 srs_reverse(srs_t *srs, char *buf, int buflen,
 				const char *sender);
+int		 srs_reverse_alloc(srs_t *srs, char **sptr, const char *sender);
 const char *
 		 srs_strerror(int code);
 void	 srs_add_secret(srs_t *srs, const char *secret);
 
 #define SRS_PARAM_DECLARE(n, t) \
-	void srs_set_ ## n (srs_t *srs, t value); \
+	int srs_set_ ## n (srs_t *srs, t value); \
 	t srs_get_ ## n (srs_t *srs);
 
+SRS_PARAM_DECLARE(separator, char)
+SRS_PARAM_DECLARE(maxage, int)
+SRS_PARAM_DECLARE(hashlength, int)
+SRS_PARAM_DECLARE(hashmin, int)
 
 /* SHA1 implementation */
 
