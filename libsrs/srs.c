@@ -10,6 +10,10 @@
 #define EVP_MAX_MD_SIZE (16+20) /* The SSLv3 md5+sha1 type */
 #endif
 
+#ifdef _WIN32
+#define alloca _alloca
+#endif
+
 	/* Use this */
 #define STRINGP(s) ((s != NULL) || (*(s) != '\0'))
 
@@ -144,12 +148,12 @@ srs_timestamp_check(srs_t *srs, char *stamp)
 		bp = strchr(SRS_TIME_BASECHARS, *sp);
 		if (bp == NULL)
 			return SRS_EBADTIMESTAMPCHAR;
-		off = SRS_TIME_BASECHARS - bp;
-		then = (then << SRS_TIME_BASEBITS) + off;
+		off = bp - SRS_TIME_BASECHARS;
+		then = (then << SRS_TIME_BASEBITS) | off;
 	}
 
 	time(&now);
-	now = now / SRS_TIME_PRECISION;
+	now = (now / SRS_TIME_PRECISION) % SRS_TIME_SLOTS;
 	while (now < then)
 		now = now + SRS_TIME_SLOTS;
 
@@ -162,8 +166,8 @@ const char *SRS_HASH_BASECHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 								 "abcdefghijklnmopqrstuvwxyz"
 								 "0123456789+/";
 
-static int
-srs_hash_create_v(srs_t *srs, char *buf, int nargs, va_list ap)
+static void
+srs_hash_create_v(srs_t *srs, int idx, char *buf, int nargs, va_list ap)
 {
 	HMAC_CTX		 ctx;
 	char			 srshash[EVP_MAX_MD_SIZE + 1];
@@ -177,11 +181,7 @@ srs_hash_create_v(srs_t *srs, char *buf, int nargs, va_list ap)
 	int				 i;
 	int				 j;
 
-	if (srs->secrets == NULL)
-		return SRS_ENOSECRETS;
-	secret = srs->secrets[0];
-	if (secret == NULL)
-		return SRS_ENOSECRETS;
+	secret = srs->secrets[idx];
 
 	HMAC_CTX_init(&ctx);
 	HMAC_Init(&ctx, secret, strlen(secret), EVP_sha1());
@@ -232,19 +232,25 @@ srs_hash_create_v(srs_t *srs, char *buf, int nargs, va_list ap)
 
 	*bp = '\0';
 	buf[srs->hashlength] = '\0';
-
-	return SRS_SUCCESS;
 }
 
 int
 srs_hash_create(srs_t *srs, char *buf, int nargs, ...)
 {
 	va_list	 ap;
-	int		 ret;
+
+	if (srs->numsecrets == 0)
+		return SRS_ENOSECRETS;
+	if (srs->secrets == NULL)
+		return SRS_ENOSECRETS;
+	if (srs->secrets[0] == NULL)
+		return SRS_ENOSECRETS;
+
 	va_start(ap, nargs);
-	ret = srs_hash_create_v(srs, buf, nargs, ap);
+	srs_hash_create_v(srs, 0, buf, nargs, ap);
 	va_end(ap);
-	return ret;
+
+	return SRS_SUCCESS;
 }
 
 int
@@ -254,7 +260,7 @@ srs_hash_check(srs_t *srs, char *hash, int nargs, ...)
 	char	*srshash;
 	char	*tmp;
 	int		 len;
-	int		 ret;
+	int		 i;
 
 	len = strlen(hash);
 	if (len < srs->hashmin)
@@ -266,15 +272,17 @@ srs_hash_check(srs_t *srs, char *hash, int nargs, ...)
 		hash = tmp;
 		len = srs->hashlength;
 	}
-	va_start(ap, nargs);
-	srshash = alloca(srs->hashlength + 1);
-	ret = srs_hash_create_v(srs, srshash, nargs, ap);
-	va_end(ap);
-	if (ret != SRS_SUCCESS)
-		return ret;
-	if (strncasecmp(hash, srshash, len) != 0)
-		return SRS_EHASHINVALID;
-	return SRS_SUCCESS;
+
+	for (i = 0; i < srs->numsecrets; i++) {
+		va_start(ap, nargs);
+		srshash = alloca(srs->hashlength + 1);
+		srs_hash_create_v(srs, i, srshash, nargs, ap);
+		va_end(ap);
+		if (strncasecmp(hash, srshash, len) == 0)
+			return SRS_SUCCESS;
+	}
+
+	return SRS_EHASHINVALID;
 }
 
 int
@@ -399,6 +407,9 @@ srs_parse_shortcut(srs_t *srs, char *buf, int buflen, char *senduser)
 		if (!STRINGP(srsuser))
 			return SRS_ENOSRS0USER;
 		*srsuser++ = '\0';
+		ret = srs_timestamp_check(srs, srsstamp);
+		if (ret != SRS_SUCCESS)
+			return ret;
 		ret = srs_hash_check(srs, srshash, 3, srsstamp,
 						srshost, srsuser);
 		if (ret != SRS_SUCCESS)
