@@ -4,11 +4,11 @@ noinst_HEADERS = srs.c
 include_HEADERS = srs.h
 
 lib_LIBRARIES = libsrs.a
-libsrs_a_SOURCES = main.c util.c crypto.c base.c error.c
+libsrs_a_SOURCES = srs.c
 
 lib_LTLIBRARIES = libsrs.la
 libsrs_la_LIBADD = -lcrypto
 libsrs_la_LDFLAGS = -version-info 0:0:0
-libsrs_la_SOURCES = main.c util.c crypto.c base.c error.c
+libsrs_la_SOURCES = srs.c
 
 # -Wl,-soname,libsrs.so.1
