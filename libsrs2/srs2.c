@@ -138,6 +138,14 @@ srs_add_secret(srs_t *srs, const char *secret)
 	srs->secrets[srs->numsecrets++] = strdup(secret);
 }
 
+const char *
+srs_get_secret(srs_t *srs, int idx)
+{
+	if (idx < srs->numsecrets)
+		return srs->secrets[idx];
+	return NULL;
+}
+
 #define SRS_PARAM_DEFINE(n, t) \
 	int srs_set_ ## n (srs_t *srs, t value) { \
 		srs->n = value; \
@@ -180,12 +188,9 @@ const char *SRS_TIME_BASECHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 #define SRS_TIME_SIZE		2
 #define SRS_TIME_SLOTS		(1<<(SRS_TIME_BASEBITS<<(SRS_TIME_SIZE-1)))
 
-static void
-srs_timestamp_create(srs_t *srs, char *buf)
+void
+srs_timestamp_create(srs_t *srs, char *buf, time_t now)
 {
-	time_t	now;
-
-	time(&now);
 	now = now / SRS_TIME_PRECISION;
 	buf[1] = SRS_TIME_BASECHARS[now & ((1 << SRS_TIME_BASEBITS) - 1)];
 	now = now >> SRS_TIME_BASEBITS;
@@ -193,14 +198,14 @@ srs_timestamp_create(srs_t *srs, char *buf)
 	buf[2] = '\0';
 }
 
-static int
-srs_timestamp_check(srs_t *srs, char *stamp)
+int
+srs_timestamp_check(srs_t *srs, const char *stamp)
 {
-	char	*sp;
-	char	*bp;
-	int		 off;
-	time_t	 now;
-	time_t	 then;
+	const char	*sp;
+	char		*bp;
+	int			 off;
+	time_t		 now;
+	time_t		 then;
 
 	/* We had better go around this loop exactly twice! */
 	then = 0;
@@ -391,7 +396,7 @@ srs_compile_shortcut(srs_t *srs,
 	if (len >= buflen)
 		return SRS_EBUFTOOSMALL;
 
-	srs_timestamp_create(srs, srsstamp);
+	srs_timestamp_create(srs, srsstamp, time(NULL));
 	srshash = alloca(srs->hashlength + 1);
 	srs_hash_create(srs, srshash, 3, srsstamp, sendhost, senduser);
 

@@ -2,13 +2,17 @@ package Mail::SRS_XS;
 
 use strict;
 eval { require warnings; };
-use vars qw($VERSION @ISA);
+use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 use Exporter;
 
 require DynaLoader;
 
 $VERSION = "0.01";
-@ISA = qw(DynaLoader);
+@ISA = qw(DynaLoader Exporter);
+@EXPORT_OK = ();
+%EXPORT_TAGS = (
+	all	=> \@EXPORT_OK,
+		);
 
 bootstrap Mail::SRS_XS;
 

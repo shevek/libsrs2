@@ -115,11 +115,17 @@ int		 srs_reverse_alloc(srs_t *srs, char **sptr, const char *sender);
 const char *
 		 srs_strerror(int code);
 void	 srs_add_secret(srs_t *srs, const char *secret);
+const char *
+		 srs_get_secret(srs_t *srs, int idx);
+	/* You probably shouldn't call these. */
+void	 srs_timestamp_create(srs_t *srs, char *buf, time_t now);
+int		 srs_timestamp_check(srs_t *srs, const char *stamp);
 
 #define SRS_PARAM_DECLARE(n, t) \
 	int srs_set_ ## n (srs_t *srs, t value); \
 	t srs_get_ ## n (srs_t *srs);
 
+SRS_PARAM_DECLARE(alwaysrewrite, bool)
 SRS_PARAM_DECLARE(separator, char)
 SRS_PARAM_DECLARE(maxage, int)
 SRS_PARAM_DECLARE(hashlength, int)
