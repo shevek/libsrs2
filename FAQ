@@ -1,0 +1,18 @@
+Q. I can't compile this in *BSD I can't even get past the makefile
+A. Use gmake
+
+Q. I can't compile the static library for OpenBSD
+A. Try: gmake static-obsd
+
+Q. I have a patch against MTA X, what do I do?
+A. Email jcouzens@obscurity.org and arrange to communicate.
+
+Q. I have some random question not answered here.
+A. Eamil jcouzens@obscurity.org or #libspf on irc.pobox.com
+
+Q. Great work, I want to show my appreciation, how can I?
+A. I love books.  Perhaps you could purchase something from my Amazon.com wishlist!
+   If you do, please notify me so I can remove an item, no need getting two of
+   anything :-)
+
+   http://www.amazon.com/gp/registry/registry.html/ref=cm_wl_topnav_all-product-search/104-1870528-0534330?type=wishlist

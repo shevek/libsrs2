@@ -1,0 +1,71 @@
+----------------------------------------------------------------------------------------
+Example scenario HOSTB -> HOSTC -> HOSTD (BOUNCE) -> HOSTB (verify bounce):
+----------------------------------------------------------------------------------------
+tools # ./srs -z
+SRS Query v0.2 - James Couzens <jcouzens@obscurity.org>
+
+From: (james@hosta.org) to: (james@hostb.org) which forwards to: (james@hostc.org)
+HOSTA Send: envelope-from: (james@hosta.org) : 15
+HOSTB Rewrite: envelope-from: (SRS0=MBX+=F3=hosta.org=james@hostb.org) : 38
+HOSTC Rewrite: envelope-from: (SRS1=hostb.org=MBX+=F3=hosta.org=james@hostc.org) : 48
+HOSTD Rewrite: envelope-from: (SRS1=hostb.org=MBX+=F3=hosta.org=james@hostd.org) : 48
+HOSTB Bounce: envelope-from: (SRS0=MBX+=F3=hosta.org=james@hostb.org) : 38
+HOSTB HMAC VERIFIED : enevelope-from: (james@hosta.org) : 15
+Rewrite executed in 0.0 seconds
+
+BENCHMARKS performed using libsrs v0.2 beta:
+
+========================================================================================
+AMD XP3200+ (x86-64), 512MB RAM, Linux 2.6.3:
+========================================================================================
+
+----------------------------------------------------------------------------------------
+10,000 forwards, each a separate call to the srs binary:
+----------------------------------------------------------------------------------------
+tools # ./test 10000
+10000 forwards executed in 18.145 seconds
+
+18.145 * 100 = 1814.5 (1M forwards)
+1814.5 / 60 = 30.24 (get forwards per min)
+30.24 minutes for 1M forwards, or just under 2M forwards per hour
+
+----------------------------------------------------------------------------------------
+10,000 forwards as library calls:
+----------------------------------------------------------------------------------------
+tools # time ./test2
+done
+
+real    0m0.355s
+user    0m0.339s
+sys     0m0.016s
+
+0.355 * 100 = 35.500
+35.5 seconds for 1M forwards or 101.4M forwards per hour
+
+
+========================================================================================
+AMD XP2600+ (x86-32), 1GB PC333, Linux 2.4.22:
+========================================================================================
+
+----------------------------------------------------------------------------------------
+10,000 forwards, each a separate call to the srs binary:
+----------------------------------------------------------------------------------------
+tools # ./test 10000
+10,000 forwards executed in 23.33 seconds
+
+23.33 * 100 = 2333.2 (1M forwards)
+2333.2 / 60 = 38.88 (get forwards per min)
+38.88 minutes for 1M forwards or around 1.54M forwards per hour
+
+----------------------------------------------------------------------------------------
+10,000 forwards as library calls:
+----------------------------------------------------------------------------------------
+code3 tools # time ./test2
+done
+
+real    0m0.416s
+user    0m0.400s
+sys     0m0.010s
+
+0.416s * 100 = 41.60
+41.60 seconds for 1M forwards or 86.5M forwards per hour
