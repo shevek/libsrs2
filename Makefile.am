@@ -1,8 +1,8 @@
 SUBDIRS = libsrs2 tools
-EXTRA_DIST = perl win32 dist LICENSE.BSD LICENSE.GPL-2
+EXTRA_DIST = perl python win32 dist LICENSE.BSD LICENSE.GPL-2
 
 dist-hook:
-	find $(distdir)/perl -name .svn | xargs rm -rf
-	find $(distdir)/win32 -name .svn | xargs rm -rf
-	find $(distdir)/dist -name .svn | xargs rm -rf
-	rm -rf $(distdir)/perl/Makefile.old
+	@for file in $(EXTRA_DIST); do \
+		find $(distdir)/$$file -name .svn | xargs rm -rf; \
+	done
+	rm -f $(distdir)/perl/Makefile.old
