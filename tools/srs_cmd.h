@@ -41,8 +41,8 @@
 #ifndef _SRS_CMD_H
 #define _SRS_CMD_H 1
 
-#include "../srs.h"
-#include "../util.h"
+#include "../libsrs/srs.h"
+#include "../libsrs/util.h"
 
 __BEGIN_DECLS
 
