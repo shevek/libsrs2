@@ -2,6 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT(libsrs2/srs2.h)
 AM_INIT_AUTOMAKE(libsrs2, 1.0.15)
+AC_CONFIG_MACRO_DIR([m4])
 
 dnl Weird Unix variants
 AC_AIX
@@ -11,7 +12,7 @@ dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
-AC_PROG_RANLIB
+dnl AC_PROG_RANLIB
 AC_PROG_LIBTOOL
 
 dnl More weird Unix variants

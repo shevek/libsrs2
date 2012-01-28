@@ -1,4 +1,4 @@
-CFLAGS = -g -Wall @CFLAGS@
+AM_CFLAGS = -g -Wall @CFLAGS@
 
 bin_PROGRAMS = srs
 
