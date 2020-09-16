@@ -364,7 +364,7 @@ sha_digest(char *out, char *data, int len)
 void
 srs_hmac_init(srs_hmac_ctx_t *ctx, char *secret, int len)
 {
-	char	 sbuf[SHA_BLOCKSIZE];
+	char	 sbuf[SHA_BLOCKSIZE] = {};
 	int		 i;
 
 	if (len > SHA_BLOCKSIZE) {
