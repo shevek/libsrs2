@@ -96,7 +96,7 @@ usage(char *name)
 {
 	fprintf(stderr, "Sender Rewriting Scheme - "
 					"command/daemon interface - "
-				"http://www.libsrs2.org/\n");
+				"http://www.libsrs2.net/\n");
 	fprintf(stderr, "Usage: %s [options] <address> [...]\n", name);
 	DOC_OPT('e', "separator", "<sep>",
 			"Set the initial SRS separator.", 18, 9);

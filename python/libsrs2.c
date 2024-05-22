@@ -118,7 +118,7 @@ initlibsrs2(void)
 	if (PyType_Ready(&Libsrs2Type) < 0)
 		return;
 	m = Py_InitModule3("libsrs2", Libsrs2Methods,
-					"Interface to libsrs2 (http://www.libsrs2.org/)");
+					"Interface to libsrs2 (http://www.libsrs2.net/)");
 	Py_INCREF(&Libsrs2Type);
 	PyModule_AddObject(m, "Libsrs2", (PyObject *)&Libsrs2Type);
 }

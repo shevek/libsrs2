@@ -1,7 +1,7 @@
 /* Copyright (c) 2004 Shevek (srs@anarres.org)
  * All rights reserved.
  *
- * This file is a part of libsrs2 from http://www.libsrs2.org/
+ * This file is a part of libsrs2 from http://www.libsrs2.net/
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, under the terms of either the GNU General Public

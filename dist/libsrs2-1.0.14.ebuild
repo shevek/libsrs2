@@ -3,9 +3,9 @@
 # $Header: $
 
 RESTRICT="nomirror"
-SRC_URI="http://www.libsrs2.org/srs/libsrs2-${PV}.tar.gz"
+SRC_URI="http://www.libsrs2.net/srs/libsrs2-${PV}.tar.gz"
 DESCRIPTION="Library to perform SMTP SRS rewriting"
-HOMEPAGE="http://www.libsrs2.org/"
+HOMEPAGE="http://www.libsrs2.net/"
 LICENSE="GPL-2"
 
 SLOT="0"

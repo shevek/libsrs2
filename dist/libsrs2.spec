@@ -12,8 +12,8 @@ Release: 4%{?redhatvers:.%{redhatvers}}
 License: GPL
 Group: System Environment/Libraries
 Packager: Shevek <srs@anarres.org>
-URL: http://www.libsrs2.org/
-Source: http://www.libsrs2.org/srs/%{name}-%{version}.tar.gz
+URL: http://www.libsrs2.net/
+Source: http://www.libsrs2.net/srs/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 
 %description
