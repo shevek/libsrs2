@@ -1,0 +1,74 @@
+/******************************************************************
+ * TITLE: Common Color Scheme Stylesheet for Sinorca              *
+ * URI  : http://www.oswd.org/design/???/sinorca/color-scheme.css *
+ * MODIF: 2003-01-13 1237 +0800                                   *
+ ******************************************************************/
+
+
+/* ---------------------------------------------------------------------
+    Colors which are common to both the sinorca-grey and sinorca-white
+    stylesheets are declared here. Color rules which are specific to
+    one of the alternative stylesheets are found in that alternative
+    stylesheet.
+----------------------------------------------------------------------*/
+
+
+/* ###### Text Colors ###### */
+
+body {color: black;}
+
+#bodyText a {color: #0066cc;}
+
+#upperMenuBar, #upperMenuBar a {color: white;}
+
+#header {color: #274e90;}
+
+#headerSearch .submit {color: white;}
+
+#lowerMenuBar, #lowerMenuBar a {color: white;}
+
+#upperMenuBar .highlight, #lowerMenuBar .highlight {color: #fda05b;}
+
+.sideMenuBox a {color: #0066cc;}
+
+.sideMenuBox a:hover {color: white;}
+
+.sideTextBox span {color: black;}
+
+.sideTextBox a {color: #0066cc;}
+
+#footer, #footer a {color: white;}
+
+
+/* ###### Background Colors ###### */
+
+q {background-color: #f0f0f0;}
+
+#upperMenuBar {background-color: #6487dc;}
+
+#header {background-color: #8caae6;}
+
+#headerSearch .submit {background-color: #8cc68c;}
+
+#lowerMenuBar {background-color: #003399;}
+
+.sideMenuBox a:hover {background-color: #6487dc;}
+
+#footer {background-color: #6487dc;}
+
+
+/* ###### Border Colors ###### */
+
+q {border-color: #999999;}
+
+acronym {border-bottom-color: #999999;}
+
+#bodyText a {border-bottom-color: #0066cc;}
+
+#headerSearch .text {border-color: #003399;}
+
+#headerSearch .submit {border-color: white;}
+
+.sideTextBox a {border-bottom-color: #0066cc;}
+
+#footer a {border-bottom-color: white;}
