@@ -18,13 +18,13 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: libspf2
-email: webmaster@libspf2.net
+title: libsrs2
+email: webmaster@libsrs2.net
 description: >- # this means to ignore newlines until "baseurl:"
-  libspf2 implements the Sender Policy Framework for email security,
+  libsrs2 implements the Sender Rewriting Scheme for email security,
   and is part of the SPF/SRS protocol pair.
 baseurl: "/" # the subpath of your site, e.g. /blog
-url: https://www.libspf2.net/ # the base hostname & protocol for your site, e.g. http://example.com
+url: https://www.libsrs2.net/ # the base hostname & protocol for your site, e.g. http://example.com
 github_username: shevek
 
 # Build settings
