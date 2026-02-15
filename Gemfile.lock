@@ -39,6 +39,8 @@ GEM
       safe_yaml (~> 1.0)
       terminal-table (>= 1.8, < 4.0)
       webrick (~> 1.7)
+    jekyll-redirect-from (0.16.0)
+      jekyll (>= 3.3, < 5.0)
     jekyll-sass-converter (3.1.0)
       sass-embedded (~> 1.75)
     jekyll-watch (2.2.1)
@@ -109,6 +111,7 @@ DEPENDENCIES
   csv (~> 3.0)
   http_parser.rb (~> 0.6.0)
   jekyll (~> 4.3.2)
+  jekyll-redirect-from
   tzinfo (>= 1, < 3)
   tzinfo-data
   wdm (~> 0.1.1)
@@ -131,6 +134,7 @@ CHECKSUMS
   http_parser.rb (0.8.1) sha256=9ae8df145b39aa5398b2f90090d651c67bd8e2ebfe4507c966579f641e11097a
   i18n (1.14.8) sha256=285778639134865c5e0f6269e0b818256017e8cde89993fdfcbfb64d088824a5
   jekyll (4.3.4) sha256=c488282c2819c392d34d3a3784eacde2cde4b61c8e3c9c9295f6c01fb1754404
+  jekyll-redirect-from (0.16.0) sha256=6635cae569ef9b0f90ffb71ec014ba977177fafb44d32a2b0526288d4d9be6db
   jekyll-sass-converter (3.1.0) sha256=83925d84f1d134410c11d0c6643b0093e82e3a3cf127e90757a85294a3862443
   jekyll-watch (2.2.1) sha256=bc44ed43f5e0a552836245a54dbff3ea7421ecc2856707e8a1ee203a8387a7e1
   kramdown (2.5.2) sha256=1ba542204c66b6f9111ff00dcc26075b95b220b07f2905d8261740c82f7f02fa

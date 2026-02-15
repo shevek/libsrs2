@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Home
+redirect_from:
+  - /srs/
 ---
 
 <h1>Welcome</h1>
