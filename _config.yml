@@ -54,6 +54,4 @@ plugins: []
 #   - vendor/gems/
 #   - vendor/ruby/
 exclude:
-    - docs/api.html
-    - overview.html
     - news.md

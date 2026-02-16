@@ -3,6 +3,7 @@ layout: default
 title: Home
 redirect_from:
   - /srs/
+  - /status.html
 ---
 
 <h1>Welcome</h1>
