@@ -20,8 +20,10 @@ system facilities</b>.
 
 <ul>
 <li><a href="srs/srs.pdf">I want to find out about SRS.</a> (technical paper)</li>
+{% comment %}
 <li><a href="docs/mta-users.html">I want to configure my MTA for SRS.</a> (MTA users' guide)</li>
 <li><a href="docs/mta-patches.html">I want to patch an MTA for SRS.</a> (MTA patchers' guide)</li>
+{% endcomment %}
 <li><a href="download.html">I want to download libsrs2.</a> (download page)</li>
 <li><a href="docs/index.html">I want to read documentation for libsrs2.</a> (documentation page)</li>
 <li><a href="support.html">I want support for SRS or libsrs2.</a> (support page)</li>
@@ -55,8 +57,8 @@ The Sender Rewriting Scheme, or SRS, provides a standard for
 this rewriting which makes forwarding compatible with these
 address verification schemes, preserves bounce functionality
 and is not vulnerable to attacks by spammers. A graphical
-explanation is available <a href="overview.html">here</a> or <a
-href="https://spf.pobox.com/srs.html">here</a> and a technical
+explanation is available <a href="overview.html">here</a> 
+and a technical
 document describing the protocol and its strengths is at <a
 href="srs/srs.pdf">here</a>.
 
